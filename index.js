@@ -287,9 +287,13 @@ class HyperDHT extends DHT {
     const latest = opts.latest !== false
 
     for await (const node of query) {
+      // if node.seq less than current.seq
       if (result && node.seq <= result.seq) continue
+      // if node.seq less than userSeq Or invalid
       if (node.seq < userSeq || !Persistent.verifyMutable(node.signature, node.seq, node.value, publicKey)) continue
+      // idk
       if (!latest) return node
+      // if no result or node.seq greater than current seq. set new res
       if (!result || node.seq > result.seq) result = node
     }
 
@@ -444,6 +448,7 @@ class HyperDHT extends DHT {
   }
 
   async _requestUnannounce (keyPair, dht, target, token, from, sign) {
+    // announce object
     const unann = {
       peer: {
         publicKey: keyPair.publicKey,
@@ -452,8 +457,10 @@ class HyperDHT extends DHT {
       signature: null
     }
 
+    // sign ann obj and attach it
     unann.signature = await sign(target, token, from.id, unann, keyPair)
 
+    // encode ann object
     const value = c.encode(m.announce, unann)
 
     return dht.request({
